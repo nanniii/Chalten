@@ -18,6 +18,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mButtonDetect;
     private Button mButtonAssign;
 
+    int num;
+
     private ImageView mImageView;
 
 
