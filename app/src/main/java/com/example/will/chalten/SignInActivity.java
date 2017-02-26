@@ -3,14 +3,22 @@ package com.example.will.chalten;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.method.PasswordTransformationMethod;
+import android.text.method.TransformationMethod;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.squareup.otto.Bus;
+import com.squareup.otto.Subscribe;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -22,7 +30,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class SignInActivity extends AppCompatActivity implements View.OnClickListener {
+public class SignInActivity extends AppCompatActivity {
 
     private EditText mEmail;
     private EditText mPassword;
@@ -30,30 +38,89 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
     private Button mSignUp;
     public static final int CONNECTION_TIMEOUT=10000;
     public static final int READ_TIMEOUT=15000;
+    private Communicator communicator;
+    private final static String TAG = "SignInActivity";
+    public static Bus bus;
+    private String mEmailString;
+    private String mPasswordString;
+    private TextView information, extraInformation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
-        mEmail = (EditText) findViewById(R.id.inputEmail);
-        mEmail.setOnClickListener(this);
-        mPassword = (EditText) findViewById(R.id.inputPassword);
-        mPassword.setOnClickListener(this);
-        mSignIn = (Button) findViewById(R.id.toMainButton);
-        mSignIn.setOnClickListener(this);
-        mSignUp = (Button) findViewById(R.id.toSignUpButton);
-        mSignUp.setOnClickListener(this);
+        communicator = new Communicator();
 
+        mEmail = (EditText) findViewById(R.id.inputEmail);
+        mPassword = (EditText) findViewById(R.id.inputPassword);
+        mPassword.setTransformationMethod(new PasswordTransformationMethod());
+        mSignIn = (Button) findViewById(R.id.toMainButton);
+        mSignIn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mEmailString = mEmail.getText().toString();
+                mPasswordString = mPassword.getText().toString();
+                usePost(mEmailString, mPasswordString);
+            }
+        });
+        mSignUp = (Button) findViewById(R.id.toSignUpButton);
+        mSignUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mEmailString = mEmail.getText().toString();
+                mPasswordString = mPassword.getText().toString();
+                useGet(mEmailString, mPasswordString);
+            }
+        });
+
+        information = (TextView)findViewById(R.id.information);
+        extraInformation = (TextView)findViewById(R.id.extraInformation);
     }
 
+    private void usePost(String email, String password){
+        communicator.loginPost(email, password);
+    }
+
+    private void useGet(String email, String password){
+        communicator.loginGet(email, password);
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        BusProvider.getInstance().register(this);
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        BusProvider.getInstance().unregister(this);
+    }
+
+    @Subscribe
+    public void onServerEvent(ServerEvent serverEvent){
+        Toast.makeText(this, ""+serverEvent.getServerResponse().getMessage(), Toast.LENGTH_SHORT).show();
+        if(serverEvent.getServerResponse().getUsername() != null){
+            information.setText("Username: "+serverEvent.getServerResponse().getUsername() + " || Password: "+serverEvent.getServerResponse().getPassword());
+        }
+        extraInformation.setText("" + serverEvent.getServerResponse().getMessage());
+    }
+
+    @Subscribe
+    public void onErrorEvent(ErrorEvent errorEvent){
+        Toast.makeText(this,""+errorEvent.getErrorMsg(),Toast.LENGTH_SHORT).show();
+    }
+
+
+    /*
     @Override
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.toMainButton:
                 Toast toastMain = Toast.makeText(this, "Main", Toast.LENGTH_LONG);
                 toastMain.show();
-                checkLogin();
+                //checkLogin();
                 break;
             case R.id.toSignUpButton:
                 Toast toastSignUp = Toast.makeText(this, "Sign Up", Toast.LENGTH_LONG);
@@ -61,7 +128,9 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
                 break;
         }
     }
+    */
 
+    /*
     public void checkLogin() {
 
         // Get text from email and passord field
@@ -193,4 +262,5 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
             }
         }
     }
+    */
 }
