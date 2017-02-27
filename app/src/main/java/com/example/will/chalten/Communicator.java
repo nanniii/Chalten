@@ -19,7 +19,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class Communicator {
 
     private static  final String TAG = "Communicator";
-    private static final String SERVER_URL = "https://chalten.000webhostapp.com/api.php";
+    private static final String SERVER_URL = "https://chalten.000webhostapp.com/api.php/";
 
     public void loginPost(String username, String password){
 
